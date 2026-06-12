@@ -8,6 +8,7 @@ interface BottomNavProps {
 export function BottomNav({ activeTab, onTabChange }: BottomNavProps) {
   const tabs = [
     { id: 'feed', label: 'Feed', icon: Home },
+    { id: 'community', label: 'Community', icon: Users },
     { id: 'activity', label: 'Karte', icon: Activity },
     { id: 'wiki', label: 'Wiki', icon: BookOpen },
     { id: 'plans', label: 'Pläne', icon: ClipboardList },
@@ -25,7 +26,7 @@ export function BottomNav({ activeTab, onTabChange }: BottomNavProps) {
             <button
               key={tab.id}
               onClick={() => onTabChange(tab.id)}
-              className={`flex flex-col items-center justify-center py-2 px-2 min-w-[50px] transition-colors ${
+              className={`flex flex-col items-center justify-center py-2 px-1 min-w-[40px] transition-colors ${
                 isActive ? 'text-emerald-600' : 'text-gray-600 hover:text-gray-900'
               }`}
             >
