@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Calendar, MapPin, Users, TrendingUp } from 'lucide-react';
 import { Card } from '../ui/card';
-import { Button } from '../ui/button';
 import { api, ApiWorkout } from '../../api';
 
 export function FeedTab() {
@@ -33,23 +32,20 @@ export function FeedTab() {
 
       <div className="p-4 space-y-6">
 
-        {/* Aktivitäten aus DB */}
+        {/* Meine Workouts */}
         <section>
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-bold">MEINE AKTIVITÄTEN</h2>
-          </div>
-
+          <h2 className="text-lg font-bold mb-4">MEINE AKTIVITÄTEN</h2>
           {loading ? (
             <p className="text-center text-gray-500 py-4">Lädt...</p>
           ) : workouts.length === 0 ? (
             <Card className="p-6 text-center text-gray-500">
               <TrendingUp className="size-10 mx-auto mb-2 text-gray-300" />
-              <p>Noch keine Workouts. Starte dein erstes Training!</p>
+              <p>Noch keine Workouts. Starte dein erstes Training auf der Karte!</p>
             </Card>
           ) : (
             <div className="space-y-3">
               {workouts.map((workout) => (
-                <Card key={workout.id} className="p-4 hover:shadow-md transition-shadow">
+                <Card key={workout.id} className="p-4">
                   <div className="flex items-start gap-3">
                     <div className="size-12 rounded-full bg-emerald-600 flex items-center justify-center flex-shrink-0">
                       <TrendingUp className="size-6 text-white" />
@@ -64,9 +60,7 @@ export function FeedTab() {
                       {workout.exercises.length > 0 && (
                         <div className="text-sm text-gray-600 mt-2 space-y-1">
                           {workout.exercises.map((ex) => (
-                            <div key={ex.id}>
-                              {ex.name} — {ex.sets}×{ex.reps}
-                            </div>
+                            <div key={ex.id}>{ex.name} — {ex.sets}×{ex.reps}</div>
                           ))}
                         </div>
                       )}
@@ -78,15 +72,12 @@ export function FeedTab() {
           )}
         </section>
 
-        {/* Events */}
+        {/* Events - nur anzeigen, kein Teilnehmen */}
         <section>
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-bold">EVENTS</h2>
-            <button className="text-sm font-semibold">ALLE ANSEHEN</button>
-          </div>
+          <h2 className="text-lg font-bold mb-4">EVENTS</h2>
           <div className="space-y-3">
             {events.map((event) => (
-              <Card key={event.id} className="overflow-hidden hover:shadow-lg transition-shadow">
+              <Card key={event.id} className="overflow-hidden">
                 <div className="h-32" style={{ background: event.image }} />
                 <div className="p-4">
                   <h3 className="font-semibold mb-2">{event.title}</h3>
@@ -94,16 +85,13 @@ export function FeedTab() {
                     <Calendar className="size-4" />
                     <span>{event.date}</span>
                   </div>
-                  <div className="flex items-center gap-2 text-sm text-gray-600 mb-3">
+                  <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
                     <MapPin className="size-4" />
                     <span>{event.location}</span>
                   </div>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-1 text-sm text-gray-600">
-                      <Users className="size-4" />
-                      <span>{event.participants} Teilnehmer</span>
-                    </div>
-                    <Button size="sm">Teilnehmen</Button>
+                  <div className="flex items-center gap-1 text-sm text-gray-600">
+                    <Users className="size-4" />
+                    <span>{event.participants} Teilnehmer</span>
                   </div>
                 </div>
               </Card>
@@ -113,12 +101,10 @@ export function FeedTab() {
 
         {/* News */}
         <section>
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-bold">NEWS & BERICHTE</h2>
-          </div>
+          <h2 className="text-lg font-bold mb-4">NEWS & BERICHTE</h2>
           <div className="space-y-3">
             {news.map((article) => (
-              <Card key={article.id} className="p-4 hover:shadow-md transition-shadow">
+              <Card key={article.id} className="p-4">
                 <div className="flex gap-3">
                   <div className="size-20 rounded bg-gradient-to-br from-emerald-400 to-blue-500 flex-shrink-0" />
                   <div className="flex-1">

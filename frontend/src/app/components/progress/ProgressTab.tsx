@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
-import { TrendingUp, Trophy, Award, Plus } from 'lucide-react';
+import { TrendingUp, Trophy, Award } from 'lucide-react';
 import { Card } from '../ui/card';
-import { Button } from '../ui/button';
 import { api, ApiWorkout } from '../../api';
 
 export function ProgressTab() {
@@ -17,15 +16,13 @@ export function ProgressTab() {
 
   const totalWorkouts = workouts.length;
   const thisWeek = workouts.filter(w => {
-    const d = new Date(w.created_at);
-    const now = new Date();
-    const diff = (now.getTime() - d.getTime()) / (1000 * 60 * 60 * 24);
+    const diff = (new Date().getTime() - new Date(w.created_at).getTime()) / (1000 * 60 * 60 * 24);
     return diff <= 7;
   }).length;
 
   const badges = [
-    { id: '1', name: 'Night Owl', description: 'Erstes Training', color: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' },
-    { id: '2', name: 'Startlinie', description: 'Registriert', color: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)' },
+    { id: '1', name: 'Night Owl', description: 'Erstes Training absolviert', color: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' },
+    { id: '2', name: 'Startlinie', description: 'Bei CallisTrack registriert', color: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)' },
   ];
 
   return (
@@ -36,9 +33,9 @@ export function ProgressTab() {
 
       <div className="p-4 space-y-6">
 
-        {/* Wochenstatistik */}
+        {/* Statistik */}
         <section>
-          <h2 className="text-lg font-bold mb-4">WOCHENSTATISTIK</h2>
+          <h2 className="text-lg font-bold mb-4">STATISTIK</h2>
           <Card className="p-4">
             <div className="grid grid-cols-2 gap-4 text-center">
               <div>
@@ -61,7 +58,7 @@ export function ProgressTab() {
           ) : workouts.length === 0 ? (
             <Card className="p-6 text-center text-gray-500">
               <TrendingUp className="size-10 mx-auto mb-2 text-gray-300" />
-              <p>Noch keine Workouts vorhanden.</p>
+              <p>Noch keine Workouts. Starte auf der Karte!</p>
             </Card>
           ) : (
             <div className="space-y-3">
@@ -76,11 +73,14 @@ export function ProgressTab() {
                       <div className="text-sm text-gray-500">
                         {new Date(workout.created_at).toLocaleDateString('de-DE')}
                       </div>
+                      {workout.exercises.length > 0 && (
+                        <div className="text-xs text-gray-500 mt-1">
+                          {workout.exercises.map(ex => `${ex.name} ${ex.sets}×${ex.reps}`).join(' · ')}
+                        </div>
+                      )}
                     </div>
                     {workout.duration_sec && (
-                      <div className="text-sm text-gray-600">
-                        {Math.floor(workout.duration_sec / 60)} min
-                      </div>
+                      <div className="text-sm text-gray-600">{Math.floor(workout.duration_sec / 60)} min</div>
                     )}
                   </div>
                 </Card>
@@ -90,7 +90,7 @@ export function ProgressTab() {
         </section>
 
         {/* Badges */}
-        <section>
+        <section className="pb-8">
           <h2 className="text-lg font-bold mb-4">BADGES</h2>
           <div className="grid grid-cols-2 gap-3">
             {badges.map((badge) => (
@@ -103,19 +103,6 @@ export function ProgressTab() {
               </Card>
             ))}
           </div>
-        </section>
-
-        {/* Ziel erstellen */}
-        <section className="pb-8">
-          <Card className="p-6 text-center bg-gradient-to-br from-emerald-50 to-blue-50">
-            <Trophy className="size-12 mx-auto mb-3 text-emerald-600" />
-            <h3 className="font-bold text-lg mb-2">Setze dir neue Ziele!</h3>
-            <p className="text-sm text-gray-600 mb-4">Tracke deine Fortschritte und werde besser</p>
-            <Button className="w-full">
-              <Plus className="size-4 mr-2" />
-              Neues Ziel erstellen
-            </Button>
-          </Card>
         </section>
 
       </div>

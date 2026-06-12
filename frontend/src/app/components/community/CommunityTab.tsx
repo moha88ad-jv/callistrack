@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Trophy, Calendar, Users, UserPlus, UserCheck, MapPin, Award } from 'lucide-react';
+import { Trophy, Users, UserPlus, UserCheck, Award } from 'lucide-react';
 import { Card } from '../ui/card';
 import { Button } from '../ui/button';
 import { Avatar, AvatarFallback } from '../ui/avatar';
@@ -20,7 +20,7 @@ export function CommunityTab() {
   const toggleFollow = async (userId: string) => {
     try {
       if (following.has(userId)) {
-        await fetch(`/api/users/${userId}/follow`, { 
+        await fetch(`/api/users/${userId}/follow`, {
           method: 'DELETE',
           headers: { Authorization: `Bearer ${localStorage.getItem('ct_token')}` }
         });
@@ -54,26 +54,14 @@ export function CommunityTab() {
         <h1 className="text-2xl font-bold">COMMUNITY</h1>
       </div>
 
-      <div className="relative h-48 overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-emerald-600 to-blue-600 flex items-center justify-center">
-          <div className="text-white text-center px-6">
-            <h2 className="text-2xl font-bold mb-2">WERDE TEIL VON</h2>
-            <h2 className="text-2xl font-bold">CALISTHENICS MAINZ</h2>
-          </div>
-        </div>
-      </div>
-
       <div className="p-4 space-y-6">
 
-        {/* Challenges */}
+        {/* Challenges - nur anzeigen */}
         <section>
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-bold">CHALLENGES</h2>
-            <button className="text-sm font-semibold">ENTDECKEN</button>
-          </div>
+          <h2 className="text-lg font-bold mb-4">CHALLENGES</h2>
           <div className="space-y-3">
             {challenges.map((challenge) => (
-              <Card key={challenge.id} className="p-4 hover:shadow-md transition-shadow">
+              <Card key={challenge.id} className="p-4">
                 <div className="flex items-start gap-3">
                   <div className="size-12 rounded-full bg-yellow-500 flex items-center justify-center flex-shrink-0">
                     <Trophy className="size-6 text-white" />
@@ -87,7 +75,7 @@ export function CommunityTab() {
                         <span>{challenge.progress}%</span>
                       </div>
                       <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-                        <div className="h-full bg-emerald-600 transition-all" style={{ width: `${challenge.progress}%` }} />
+                        <div className="h-full bg-emerald-600" style={{ width: `${challenge.progress}%` }} />
                       </div>
                     </div>
                     <div className="flex items-center justify-between text-sm">
@@ -104,15 +92,12 @@ export function CommunityTab() {
           </div>
         </section>
 
-        {/* Communities */}
+        {/* Communities - nur anzeigen, kein Beitreten */}
         <section>
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-bold">COMMUNITIES</h2>
-            <button className="text-sm font-semibold">DURCHSUCHEN</button>
-          </div>
+          <h2 className="text-lg font-bold mb-4">COMMUNITIES</h2>
           <div className="space-y-3">
             {communities.map((community) => (
-              <Card key={community.id} className="p-4 hover:shadow-md transition-shadow">
+              <Card key={community.id} className="p-4">
                 <div className="flex items-center gap-3">
                   <div className="size-16 rounded-lg flex-shrink-0" style={{ background: community.image }} />
                   <div className="flex-1">
@@ -122,24 +107,21 @@ export function CommunityTab() {
                       <span>{community.members} Mitglieder</span>
                     </div>
                   </div>
-                  <Button size="sm">Beitreten</Button>
                 </div>
               </Card>
             ))}
           </div>
         </section>
 
-        {/* Vorgeschlagene Nutzer aus DB */}
+        {/* Echte Nutzer aus DB mit Follow */}
         <section>
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-bold">VORGESCHLAGENE NUTZER</h2>
-          </div>
+          <h2 className="text-lg font-bold mb-4">NUTZER</h2>
           {loading ? (
             <p className="text-center text-gray-500 py-4">Lädt...</p>
           ) : (
             <div className="grid grid-cols-2 gap-3">
               {users.map((user) => (
-                <Card key={user.id} className="p-4 text-center hover:shadow-md transition-shadow">
+                <Card key={user.id} className="p-4 text-center">
                   <Avatar className="size-16 mx-auto mb-3">
                     <AvatarFallback className="bg-emerald-600 text-white text-lg">
                       {user.username.substring(0, 2).toUpperCase()}
