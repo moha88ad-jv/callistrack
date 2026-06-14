@@ -69,6 +69,27 @@ export function UserProfile({ user, onTogglePublic }: UserProfileProps) {
               </div>
               <Progress value={progressPercentage} className="h-3 bg-emerald-900/30" />
             </div>
+            <div className="bg-emerald-800/40 rounded-lg p-3 mt-2">
+              <p className="text-sm font-semibold mb-2">📈 So erreichst du Level {user.level + 1}:</p>
+              <div className="space-y-1 text-sm opacity-90">
+                <div className="flex justify-between">
+                  <span>🏋️ Workout loggen</span>
+                  <span>+10 Punkte</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>⭐ Spot bewerten</span>
+                  <span>+5 Punkte</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>📍 Spot hinzufügen</span>
+                  <span>+20 Punkte</span>
+                </div>
+                <div className="border-t border-emerald-600 pt-2 mt-2 flex justify-between font-semibold">
+                  <span>Noch benötigt</span>
+                  <span>{pointsToNextLevel - currentLevelProgress} Punkte</span>
+                </div>
+              </div>
+            </div>
           </div>
         </Card>
 
