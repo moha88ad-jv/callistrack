@@ -43,21 +43,16 @@ router.get('/me', authenticate, async (req: Request, res: Response): Promise<voi
 });
 
 /**
- * GET /api/users/:id
- * Public profile.
+ * GET /api/users/me/following
+ * Returns all user IDs the current user follows.
  */
-router.get('/:id', async (req: Request, res: Response): Promise<void> => {
+router.get('/me/following', authenticate, async (req: Request, res: Response): Promise<void> => {
   try {
     const result = await pool.query(
-      `SELECT id, username, bio, level, points, is_public FROM users WHERE id = $1`,
-      [req.params.id]
+      'SELECT following_id FROM follows WHERE follower_id = $1',
+      [req.user!.userId]
     );
-
-    if (!result.rowCount || !result.rows[0].is_public) {
-      res.status(404).json({ error: 'Profil nicht gefunden oder privat' }); return;
-    }
-
-    res.json(result.rows[0]);
+    res.json(result.rows.map((r: { following_id: string }) => r.following_id));
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }
@@ -76,8 +71,26 @@ router.patch('/me', authenticate, async (req: Request, res: Response): Promise<v
        WHERE id = $3`,
       [bio ?? null, isPublic !== undefined ? isPublic : null, req.user!.userId]
     );
-
     res.json({ message: 'Profil aktualisiert' });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * GET /api/users/:id
+ * Public profile.
+ */
+router.get('/:id', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const result = await pool.query(
+      `SELECT id, username, bio, level, points, is_public FROM users WHERE id = $1`,
+      [req.params.id]
+    );
+    if (!result.rowCount || !result.rows[0].is_public) {
+      res.status(404).json({ error: 'Profil nicht gefunden oder privat' }); return;
+    }
+    res.json(result.rows[0]);
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }
@@ -118,7 +131,6 @@ router.delete('/:id/follow', authenticate, async (req: Request, res: Response): 
       `DELETE FROM follows WHERE follower_id = $1 AND following_id = $2`,
       [req.user!.userId, req.params.id]
     );
-
     res.json({ message: 'Entfolgt' });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
@@ -135,7 +147,6 @@ router.get('/:id/following', authenticate, async (req: Request, res: Response): 
       `SELECT 1 FROM follows WHERE follower_id = $1 AND following_id = $2`,
       [req.user!.userId, req.params.id]
     );
-
     res.json({ following: (result.rowCount ?? 0) > 0 });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
@@ -143,19 +154,3 @@ router.get('/:id/following', authenticate, async (req: Request, res: Response): 
 });
 
 export default router;
-
-/**
- * GET /api/users/me/following
- * Returns all user IDs the current user follows.
- */
-router.get('/me/following', authenticate, async (req: Request, res: Response): Promise<void> => {
-  try {
-    const result = await pool.query(
-      'SELECT following_id FROM follows WHERE follower_id = $1',
-      [req.user!.userId]
-    );
-    res.json(result.rows.map((r: { following_id: string }) => r.following_id));
-  } catch (err: any) {
-    res.status(500).json({ error: err.message });
-  }
-});
