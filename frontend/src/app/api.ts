@@ -110,6 +110,7 @@ export const api = {
   // ── Communities
   communities: {
     list: () => request<Community[]>('GET', '/communities'),
+    search: (q: string) => request<Community[]>('GET', `/communities/search?q=${encodeURIComponent(q)}`),
     create: (body: { name: string; description?: string }) => request<Community>('POST', '/communities', body),
     join: (id: string) => request<{ message: string }>('POST', `/communities/${id}/join`),
     leave: (id: string) => request<{ message: string }>('DELETE', `/communities/${id}/join`),

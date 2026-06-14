@@ -9,6 +9,7 @@ export function CommunityTab() {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<ApiRankingEntry[]>([]);
   const [searching, setSearching] = useState(false);
+  const [communitySearchResults, setCommunitySearchResults] = useState<Community[]>([]);
   const [communities, setCommunities] = useState<Community[]>([]);
   const [following, setFollowing] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
@@ -36,9 +37,13 @@ export function CommunityTab() {
     }
     const timer = setTimeout(() => {
       setSearching(true);
-      api.users.search(searchQuery)
-        .then(data => setSearchResults(data))
-        .catch(console.error)
+      Promise.all([
+        api.users.search(searchQuery),
+        api.communities.search(searchQuery),
+      ]).then(([usersData, communitiesData]) => {
+        setSearchResults(usersData);
+        setCommunitySearchResults(communitiesData);
+      }).catch(console.error)
         .finally(() => setSearching(false));
     }, 400);
     return () => clearTimeout(timer);
@@ -131,8 +136,8 @@ export function CommunityTab() {
             <h2 className="text-lg font-bold mb-3">SUCHERGEBNISSE</h2>
             {searching ? (
               <p className="text-center text-gray-500 py-4">Suche...</p>
-            ) : searchResults.length === 0 ? (
-              <Card className="p-4 text-center text-gray-500">Keine Nutzer gefunden</Card>
+            ) : searchResults.length === 0 && communitySearchResults.length === 0 ? (
+              <Card className="p-4 text-center text-gray-500">Keine Ergebnisse gefunden</Card>
             ) : (
               <div className="space-y-3">
                 {searchResults.map(user => (
@@ -160,6 +165,30 @@ export function CommunityTab() {
                     </div>
                   </Card>
                 ))}
+              </div>
+            )}
+
+            {communitySearchResults.length > 0 && (
+              <div className="mt-4">
+                <h3 className="font-semibold mb-2 text-gray-700">COMMUNITIES</h3>
+                <div className="space-y-3">
+                  {communitySearchResults.map(community => (
+                    <Card key={community.id} className="p-3">
+                      <div className="flex items-center gap-3">
+                        <div className="size-10 rounded-full bg-emerald-600 flex items-center justify-center">
+                          <Users className="size-5 text-white" />
+                        </div>
+                        <div className="flex-1">
+                          <div className="font-semibold">{community.name}</div>
+                          <div className="text-xs text-gray-500">{community.member_count} Mitglieder</div>
+                        </div>
+                        <Button size="sm" variant={community.is_member ? 'default' : 'outline'} onClick={() => toggleCommunity(community)}>
+                          {community.is_member ? 'Verlassen' : 'Beitreten'}
+                        </Button>
+                      </div>
+                    </Card>
+                  ))}
+                </div>
               </div>
             )}
           </section>
