@@ -15,7 +15,6 @@ router.get('/me', authenticate, async (req: Request, res: Response): Promise<voi
        FROM users WHERE id = $1`,
       [req.user!.userId]
     );
-
     if (!userRes.rowCount) { res.status(404).json({ error: 'Nutzer nicht gefunden' }); return; }
 
     const statsRes = await pool.query(
@@ -32,11 +31,7 @@ router.get('/me', authenticate, async (req: Request, res: Response): Promise<voi
       [req.user!.userId]
     );
 
-    res.json({
-      ...userRes.rows[0],
-      stats: statsRes.rows[0],
-      activities: actRes.rows,
-    });
+    res.json({ ...userRes.rows[0], stats: statsRes.rows[0], activities: actRes.rows });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }
@@ -59,6 +54,32 @@ router.get('/me/following', authenticate, async (req: Request, res: Response): P
 });
 
 /**
+ * GET /api/users/search?q=name
+ * Search for public users by username, excludes test accounts.
+ */
+router.get('/search', authenticate, async (req: Request, res: Response): Promise<void> => {
+  try {
+    const q = req.query.q as string;
+    if (!q || q.trim().length < 2) { res.json([]); return; }
+
+    const result = await pool.query(
+      `SELECT id, username, level, points
+       FROM users
+       WHERE is_public = TRUE
+         AND username ILIKE $1
+         AND email NOT LIKE '%example.com'
+         AND id != $2
+       ORDER BY points DESC
+       LIMIT 10`,
+      [`%${q.trim()}%`, req.user!.userId]
+    );
+    res.json(result.rows);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
  * PATCH /api/users/me
  * Update bio and/or visibility.
  */
@@ -66,9 +87,7 @@ router.patch('/me', authenticate, async (req: Request, res: Response): Promise<v
   try {
     const { bio, isPublic } = req.body;
     await pool.query(
-      `UPDATE users
-       SET bio = COALESCE($1, bio), is_public = COALESCE($2, is_public)
-       WHERE id = $3`,
+      `UPDATE users SET bio = COALESCE($1, bio), is_public = COALESCE($2, is_public) WHERE id = $3`,
       [bio ?? null, isPublic !== undefined ? isPublic : null, req.user!.userId]
     );
     res.json({ message: 'Profil aktualisiert' });
@@ -110,11 +129,9 @@ router.post('/:id/follow', authenticate, async (req: Request, res: Response): Pr
     }
 
     await pool.query(
-      `INSERT INTO follows (follower_id, following_id)
-       VALUES ($1, $2) ON CONFLICT DO NOTHING`,
+      `INSERT INTO follows (follower_id, following_id) VALUES ($1, $2) ON CONFLICT DO NOTHING`,
       [followerId, followingId]
     );
-
     res.json({ message: 'Erfolgreich gefolgt' });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
