@@ -17,17 +17,13 @@ interface AddSpotModalProps {
     lat: number;
     lng: number;
   }) => void;
+  onLocationPreview?: (lat: number, lng: number) => void;
 }
 
 type Step = 'location' | 'details' | 'success';
 
 const AVAILABLE_EQUIPMENT = [
-  'Klimmzugstange',
-  'Barren',
-  'Monkey Bars',
-  'Ringe',
-  'Sprossenwand',
-  'Dip-Station',
+  'Klimmzugstange', 'Barren', 'Monkey Bars', 'Ringe', 'Sprossenwand', 'Dip-Station',
 ];
 
 interface NominatimResult {
@@ -36,7 +32,7 @@ interface NominatimResult {
   lon: string;
 }
 
-export function AddSpotModal({ isOpen, onClose, onSubmit }: AddSpotModalProps) {
+export function AddSpotModal({ isOpen, onClose, onSubmit, onLocationPreview }: AddSpotModalProps) {
   const [step, setStep] = useState<Step>('location');
   const [addressQuery, setAddressQuery] = useState('');
   const [suggestions, setSuggestions] = useState<NominatimResult[]>([]);
@@ -53,6 +49,7 @@ export function AddSpotModal({ isOpen, onClose, onSubmit }: AddSpotModalProps) {
   useEffect(() => {
     if (addressQuery.trim().length < 3) {
       setSuggestions([]);
+      setShowSuggestions(false);
       return;
     }
     if (debounceRef.current) clearTimeout(debounceRef.current);
@@ -60,8 +57,8 @@ export function AddSpotModal({ isOpen, onClose, onSubmit }: AddSpotModalProps) {
       setSearching(true);
       try {
         const res = await fetch(
-          `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(addressQuery)}&format=json&limit=5&countrycodes=de&addressdetails=1&featuretype=&bounded=0`,
-          { headers: { 'Accept-Language': 'de' } }
+          `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(addressQuery)}&format=json&limit=5&addressdetails=1`,
+          { headers: { 'Accept-Language': 'de', 'User-Agent': 'CallisTrack/1.0' } }
         );
         const data = await res.json();
         setSuggestions(data);
@@ -71,32 +68,23 @@ export function AddSpotModal({ isOpen, onClose, onSubmit }: AddSpotModalProps) {
       } finally {
         setSearching(false);
       }
-    }, 500);
+    }, 600);
   }, [addressQuery]);
 
   const handleSelectAddress = (result: NominatimResult) => {
     setSelectedAddress(result.display_name);
     setAddressQuery(result.display_name);
-    setLat(parseFloat(result.lat));
-    setLng(parseFloat(result.lon));
+    const newLat = parseFloat(result.lat);
+    const newLng = parseFloat(result.lon);
+    setLat(newLat);
+    setLng(newLng);
     setSuggestions([]);
     setShowSuggestions(false);
-  };
-
-  const handleLocationConfirm = () => {
-    if (!selectedAddress && !addressQuery) return;
-    setStep('details');
+    onLocationPreview?.(newLat, newLng);
   };
 
   const handleSubmit = () => {
-    onSubmit({
-      name,
-      description,
-      address: selectedAddress || addressQuery,
-      equipment,
-      lat,
-      lng,
-    });
+    onSubmit({ name, description, address: selectedAddress || addressQuery, equipment, lat, lng });
     setStep('success');
   };
 
@@ -110,6 +98,7 @@ export function AddSpotModal({ isOpen, onClose, onSubmit }: AddSpotModalProps) {
     setDescription('');
     setEquipment([]);
     setSuggestions([]);
+    onLocationPreview?.(0, 0);
     onClose();
   };
 
@@ -143,15 +132,16 @@ export function AddSpotModal({ isOpen, onClose, onSubmit }: AddSpotModalProps) {
                       setAddressQuery(e.target.value);
                       setSelectedAddress('');
                     }}
-                    placeholder="z.B. Volkspark Mainz"
+                    placeholder="z.B. Große Bleiche 31, Mainz"
                     className="pl-9"
+                    autoComplete="off"
                   />
                   {searching && (
                     <div className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400">Suche...</div>
                   )}
                 </div>
 
-                {/* Dropdown Suggestions */}
+                {/* Dropdown */}
                 {showSuggestions && suggestions.length > 0 && (
                   <div className="mt-1 border rounded-lg shadow-lg bg-white max-h-48 overflow-y-auto z-50 relative">
                     {suggestions.map((result, i) => (
@@ -161,36 +151,43 @@ export function AddSpotModal({ isOpen, onClose, onSubmit }: AddSpotModalProps) {
                         onClick={() => handleSelectAddress(result)}
                       >
                         <MapPin className="size-4 text-emerald-600 mt-0.5 flex-shrink-0" />
-                        <span className="text-sm text-gray-700 line-clamp-2">{result.display_name}</span>
+                        <span className="text-sm text-gray-700">{result.display_name}</span>
                       </button>
                     ))}
                   </div>
                 )}
 
-                {selectedAddress && (
-                  <div className="mt-2 p-2 bg-emerald-50 rounded-lg flex items-start gap-2">
-                    <MapPin className="size-4 text-emerald-600 mt-0.5 flex-shrink-0" />
-                    <span className="text-sm text-emerald-700">{selectedAddress}</span>
+                {suggestions.length === 0 && addressQuery.length >= 3 && !searching && !showSuggestions && (
+                  <p className="text-xs text-gray-400 mt-1">Keine Ergebnisse gefunden</p>
+                )}
+              </div>
+
+              {selectedAddress && (
+                <div className="mb-4 p-3 bg-emerald-50 rounded-lg flex items-start gap-2">
+                  <MapPin className="size-4 text-emerald-600 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="text-sm font-medium text-emerald-700">Standort ausgewählt</p>
+                    <p className="text-xs text-emerald-600 mt-0.5">{selectedAddress}</p>
+                  </div>
+                </div>
+              )}
+
+              <div className="flex-1 bg-gradient-to-br from-emerald-100 to-blue-100 rounded-lg mb-4 min-h-[120px] flex items-center justify-center">
+                {selectedAddress ? (
+                  <div className="text-center">
+                    <div className="text-4xl mb-1">📍</div>
+                    <p className="text-xs text-emerald-700 font-medium">Marker auf Karte gesetzt</p>
+                    <p className="text-xs text-gray-500">Lat: {lat.toFixed(4)}, Lng: {lng.toFixed(4)}</p>
+                  </div>
+                ) : (
+                  <div className="text-center text-gray-400">
+                    <div className="text-4xl mb-1">🗺️</div>
+                    <p className="text-sm">Adresse eingeben um Standort zu setzen</p>
                   </div>
                 )}
               </div>
 
-              <div className="flex-1 bg-gradient-to-br from-emerald-100 to-blue-100 rounded-lg mb-4 min-h-[140px] flex items-center justify-center">
-                <div className="text-center text-gray-600">
-                  <div className="text-4xl mb-2">📍</div>
-                  {selectedAddress ? (
-                    <p className="text-sm font-medium text-emerald-700 px-4 line-clamp-2">{selectedAddress}</p>
-                  ) : (
-                    <p className="text-sm text-gray-500">Adresse eingeben um Standort zu setzen</p>
-                  )}
-                </div>
-              </div>
-
-              <Button
-                onClick={handleLocationConfirm}
-                disabled={!addressQuery.trim()}
-                className="w-full"
-              >
+              <Button onClick={() => setStep('details')} disabled={!addressQuery.trim()} className="w-full">
                 Standort bestätigen
               </Button>
             </div>
@@ -205,50 +202,31 @@ export function AddSpotModal({ isOpen, onClose, onSubmit }: AddSpotModalProps) {
                 <ArrowLeft className="size-5" />
               </button>
               <h2 className="font-semibold">Spot-Details</h2>
-              <span className="text-sm text-gray-500">1/2</span>
+              <span className="text-sm text-gray-500">2/2</span>
             </div>
             <div className="flex-1 overflow-y-auto p-4 space-y-4">
-              <div className="p-2 bg-emerald-50 rounded-lg flex items-start gap-2">
-                <MapPin className="size-4 text-emerald-600 mt-0.5 flex-shrink-0" />
-                <span className="text-xs text-emerald-700 line-clamp-2">{selectedAddress || addressQuery}</span>
+              <div className="p-2 bg-emerald-50 rounded-lg flex items-center gap-2">
+                <MapPin className="size-4 text-emerald-600 flex-shrink-0" />
+                <span className="text-xs text-emerald-700 line-clamp-1">{selectedAddress || addressQuery}</span>
               </div>
               <div>
                 <Label htmlFor="spot-name">Spot-Name <span className="text-red-500">*</span></Label>
-                <Input
-                  id="spot-name"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="z.B. Mainz Volkspark Calisthenics"
-                  className="mt-1"
-                />
+                <Input id="spot-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="z.B. Volkspark Calisthenics" className="mt-1" />
               </div>
               <div>
-                <Label htmlFor="spot-desc">Kurzbeschreibung</Label>
-                <Textarea
-                  id="spot-desc"
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  placeholder="Beschreibe den Spot..."
-                  rows={3}
-                  className="mt-1"
-                />
+                <Label htmlFor="spot-desc">Beschreibung</Label>
+                <Textarea id="spot-desc" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Beschreibe den Spot..." rows={3} className="mt-1" />
               </div>
               <div>
                 <Label>Equipment <span className="text-red-500">*</span></Label>
                 <div className="mt-2 grid grid-cols-2 gap-2">
                   {AVAILABLE_EQUIPMENT.map((eq) => (
-                    <div
-                      key={eq}
-                      onClick={() => toggleEquipment(eq)}
+                    <div key={eq} onClick={() => toggleEquipment(eq)}
                       className={`flex items-center gap-2 p-2 rounded-lg border cursor-pointer transition-colors ${
                         equipment.includes(eq) ? 'border-emerald-500 bg-emerald-50' : 'border-gray-200'
                       }`}
                     >
-                      <Checkbox
-                        id={`eq-${eq}`}
-                        checked={equipment.includes(eq)}
-                        onCheckedChange={() => toggleEquipment(eq)}
-                      />
+                      <Checkbox id={`eq-${eq}`} checked={equipment.includes(eq)} onCheckedChange={() => toggleEquipment(eq)} />
                       <Label htmlFor={`eq-${eq}`} className="cursor-pointer text-sm">{eq}</Label>
                     </div>
                   ))}
@@ -256,11 +234,7 @@ export function AddSpotModal({ isOpen, onClose, onSubmit }: AddSpotModalProps) {
               </div>
             </div>
             <div className="p-4 border-t">
-              <Button
-                onClick={handleSubmit}
-                disabled={!name || equipment.length === 0}
-                className="w-full"
-              >
+              <Button onClick={handleSubmit} disabled={!name || equipment.length === 0} className="w-full">
                 Spot einreichen
               </Button>
             </div>
@@ -285,18 +259,7 @@ export function AddSpotModal({ isOpen, onClose, onSubmit }: AddSpotModalProps) {
             </div>
             <div className="p-4 border-t flex gap-2">
               <Button onClick={resetAndClose} className="flex-1">Zur Karte</Button>
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setStep('location');
-                  setAddressQuery('');
-                  setSelectedAddress('');
-                  setName('');
-                  setDescription('');
-                  setEquipment([]);
-                }}
-                className="flex-1"
-              >
+              <Button variant="outline" onClick={() => { setStep('location'); setAddressQuery(''); setSelectedAddress(''); setName(''); setDescription(''); setEquipment([]); }} className="flex-1">
                 Weiteren Spot
               </Button>
             </div>

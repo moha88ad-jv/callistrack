@@ -4,7 +4,6 @@ import L from 'leaflet';
 import { Play, Pause, Star } from 'lucide-react';
 import type { Spot } from '../../types';
 
-// Fix Leaflet default icons in Vite
 delete (L.Icon.Default.prototype as any)._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
@@ -24,13 +23,19 @@ function createColoredIcon(color: string) {
   return L.divIcon({ html: svg, iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [0, -41], className: '' });
 }
 
+const previewIcon = L.divIcon({
+  html: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 25 41" width="25" height="41"><path d="M12.5 0C5.6 0 0 5.6 0 12.5c0 9.4 12.5 28.5 12.5 28.5S25 21.9 25 12.5C25 5.6 19.4 0 12.5 0z" fill="#ef4444" stroke="white" stroke-width="2"/><circle cx="12.5" cy="12.5" r="5" fill="white"/></svg>`,
+  iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [0, -41], className: ''
+});
+
 interface ActivityTabProps {
   spots: Spot[];
   onSpotClick: (spot: Spot) => void;
   highlightedEquipment?: string[];
+  previewLocation?: { lat: number; lng: number } | null;
 }
 
-export function ActivityTab({ spots, onSpotClick }: ActivityTabProps) {
+export function ActivityTab({ spots, onSpotClick, previewLocation }: ActivityTabProps) {
   const [isTracking, setIsTracking] = useState(false);
   const [duration, setDuration] = useState(0);
   const [intervalId, setIntervalId] = useState<ReturnType<typeof setInterval> | null>(null);
@@ -73,6 +78,14 @@ export function ActivityTab({ spots, onSpotClick }: ActivityTabProps) {
               </Popup>
             </Marker>
           ))}
+          {/* Preview Marker für neuen Spot */}
+          {previewLocation && previewLocation.lat !== 0 && (
+            <Marker position={[previewLocation.lat, previewLocation.lng]} icon={previewIcon}>
+              <Popup>
+                <p className="text-sm font-medium text-red-600">📍 Neuer Spot hier</p>
+              </Popup>
+            </Marker>
+          )}
         </MapContainer>
         <div className="bg-white border-t overflow-y-auto" style={{ height: '40%' }}>
           {spots.map((spot) => (

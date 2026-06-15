@@ -76,6 +76,7 @@ export default function App() {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isAddSpotOpen, setIsAddSpotOpen] = useState(false);
   const [filters, setFilters] = useState({ equipment: [] as string[], minRating: 0, showUnvalidated: false });
+  const [previewLocation, setPreviewLocation] = useState<{ lat: number; lng: number } | null>(null);
 
   // Load spots from API
   useEffect(() => {
@@ -188,7 +189,7 @@ export default function App() {
         <>
           <Header onProfileClick={() => setCurrentView('profile')} onSearchChange={setSearchQuery} searchQuery={searchQuery} onFilterClick={() => setIsFilterOpen(true)} activeFilterCount={activeFilterCount} activeFilters={filters.equipment} onRemoveFilter={handleRemoveFilter} onAddSpot={() => setIsAddSpotOpen(true)} />
           <div className="flex-1 overflow-hidden">
-            <ActivityTab spots={filteredSpots} onSpotClick={handleSpotClick} highlightedEquipment={filters.equipment} />
+            <ActivityTab spots={filteredSpots} onSpotClick={handleSpotClick} highlightedEquipment={filters.equipment} previewLocation={previewLocation} />
           </div>
           <BottomNav activeTab="activity" onTabChange={handleTabChange} />
         </>
@@ -212,7 +213,7 @@ export default function App() {
         <AdminPanel onBack={() => setCurrentView('profile')} onImport={(config) => { console.log('Import started:', config); }} />
       )}
       <FilterDrawer isOpen={isFilterOpen} onClose={() => setIsFilterOpen(false)} filters={filters} onApplyFilters={setFilters} availableEquipment={allEquipment} isAdmin={isAdmin} />
-      <AddSpotModal isOpen={isAddSpotOpen} onClose={() => setIsAddSpotOpen(false)} onSubmit={handleAddSpotSubmit} />
+      <AddSpotModal isOpen={isAddSpotOpen} onClose={() => { setIsAddSpotOpen(false); setPreviewLocation(null); }} onSubmit={handleAddSpotSubmit} onLocationPreview={(lat, lng) => setPreviewLocation(lat === 0 ? null : { lat, lng })} />
     </div>
   );
 }
