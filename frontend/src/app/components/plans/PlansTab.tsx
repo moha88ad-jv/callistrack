@@ -9,16 +9,13 @@ export function PlansTab() {
   const [loading, setLoading] = useState(true);
   const [expanded, setExpanded] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
-
-  // Form state
-  const [planName, setPlanName] = useState('');
-  const [planDesc, setPlanDesc] = useState('');
-  const [exercises, setExercises] = useState([
-    { name: '', sets: 3, reps: 10, notes: '' }
-  ]);
-  const [saving, setSaving] = useState(false);
   const [wikiExercises, setWikiExercises] = useState<WikiExercise[]>([]);
   const [showExDropdown, setShowExDropdown] = useState<number | null>(null);
+
+  const [planName, setPlanName] = useState('');
+  const [planDesc, setPlanDesc] = useState('');
+  const [exercises, setExercises] = useState([{ name: '', sets: 3, reps: 10, notes: '' }]);
+  const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
   useEffect(() => {
@@ -96,7 +93,6 @@ export function PlansTab() {
 
       <div className="p-4 space-y-4">
 
-        {/* Formular */}
         {showForm && (
           <Card className="p-4 border-2 border-emerald-500">
             <h2 className="font-bold mb-4">Neuen Trainingsplan erstellen</h2>
@@ -132,16 +128,50 @@ export function PlansTab() {
             <div className="space-y-3 mb-4">
               {exercises.map((ex, i) => (
                 <div key={i} className="p-3 bg-gray-50 rounded-lg space-y-2">
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="text"
-                      value={ex.name}
-                      onChange={e => updateExercise(i, 'name', e.target.value)}
-                      placeholder="Übungsname *"
-                      className="flex-1 px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                    />
+                  <div className="flex items-start gap-2">
+                    {/* Übung Dropdown */}
+                    <div className="flex-1 relative">
+                      <input
+                        type="text"
+                        value={ex.name}
+                        onChange={e => {
+                          updateExercise(i, 'name', e.target.value);
+                          setShowExDropdown(i);
+                        }}
+                        onFocus={() => setShowExDropdown(i)}
+                        placeholder="Übung wählen oder eingeben *"
+                        className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                        autoComplete="off"
+                      />
+                      {showExDropdown === i && (
+                        <div className="absolute left-0 right-0 mt-1 bg-white border rounded-lg shadow-lg max-h-40 overflow-y-auto z-50">
+                          {wikiExercises
+                            .filter(w => w.name.toLowerCase().includes(ex.name.toLowerCase()))
+                            .map(w => (
+                              <button
+                                key={w.id}
+                                className="w-full text-left px-3 py-2 hover:bg-emerald-50 border-b last:border-b-0 flex justify-between items-center"
+                                onMouseDown={() => {
+                                  updateExercise(i, 'name', w.name);
+                                  setShowExDropdown(null);
+                                }}
+                              >
+                                <span className="text-sm">{w.name}</span>
+                                <span className={`text-xs px-2 py-0.5 rounded-full ${
+                                  w.difficulty === 'Anfänger' ? 'bg-green-100 text-green-700' :
+                                  w.difficulty === 'Mittel' ? 'bg-yellow-100 text-yellow-700' :
+                                  'bg-red-100 text-red-700'
+                                }`}>
+                                  {w.difficulty}
+                                </span>
+                              </button>
+                            ))
+                          }
+                        </div>
+                      )}
+                    </div>
                     {exercises.length > 1 && (
-                      <button onClick={() => removeExercise(i)} className="text-red-500">
+                      <button onClick={() => removeExercise(i)} className="text-red-500 mt-2">
                         <Trash2 className="size-4" />
                       </button>
                     )}
@@ -195,7 +225,6 @@ export function PlansTab() {
           </Card>
         )}
 
-        {/* Pläne Liste */}
         {loading ? (
           <p className="text-center text-gray-500 py-8">Lädt...</p>
         ) : plans.length === 0 ? (
@@ -214,17 +243,12 @@ export function PlansTab() {
                 <div className="flex items-center justify-between">
                   <div>
                     <h3 className="font-semibold">{plan.name}</h3>
-                    {plan.description && (
-                      <p className="text-sm text-gray-500 mt-1">{plan.description}</p>
-                    )}
+                    {plan.description && <p className="text-sm text-gray-500 mt-1">{plan.description}</p>}
                     <p className="text-xs text-gray-400 mt-1">
                       {plan.exercises?.length ?? 0} Übungen • {new Date(plan.created_at).toLocaleDateString('de-DE')}
                     </p>
                   </div>
-                  {expanded === plan.id
-                    ? <ChevronUp className="size-5 text-gray-400" />
-                    : <ChevronDown className="size-5 text-gray-400" />
-                  }
+                  {expanded === plan.id ? <ChevronUp className="size-5 text-gray-400" /> : <ChevronDown className="size-5 text-gray-400" />}
                 </div>
               </button>
 
