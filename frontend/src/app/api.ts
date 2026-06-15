@@ -126,6 +126,18 @@ export const api = {
     leave: (id: string) => request<{ message: string }>('DELETE', '/events/' + id + '/join'),
     delete: (id: string) => request<{ message: string }>('DELETE', '/events/' + id),
   },
+  // ── News
+  news: {
+    list: () => request<NewsArticle[]>('GET', '/news'),
+    create: (body: { title: string; excerpt: string; category: string }) => request<NewsArticle>('POST', '/news', body),
+    delete: (id: string) => request<{ message: string }>('DELETE', '/news/' + id),
+  },
+  // ── Posts
+  posts: {
+    list: (communityId: string) => request<CommunityPost[]>('GET', '/posts/' + communityId),
+    create: (communityId: string, content: string) => request<CommunityPost>('POST', '/posts/' + communityId, { content }),
+    like: (postId: string) => request<{ liked: boolean }>('POST', '/posts/' + postId + '/like'),
+  },
   // ── Ranking ───────────────────────────────────────────────────────────────
   ranking: {
     list: () => request<ApiRankingEntry[]>('GET', '/ranking'),
@@ -232,6 +244,26 @@ export interface ApiEvent {
   creator_name?: string;
   participant_count: number;
   is_joined: boolean;
+  created_at: string;
+}
+
+export interface NewsArticle {
+  id: string;
+  title: string;
+  excerpt: string;
+  category: string;
+  author?: string;
+  created_at: string;
+}
+
+export interface CommunityPost {
+  id: string;
+  community_id: string;
+  user_id: string;
+  username: string;
+  content: string;
+  likes: number;
+  is_liked: boolean;
   created_at: string;
 }
 

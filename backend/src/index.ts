@@ -12,6 +12,8 @@ import wikiRouter     from './routes/wiki';
 import plansRouter    from './routes/plans';
 import communitiesRouter from './routes/communities';
 import eventsRouter from './routes/events';
+import newsRouter from './routes/news';
+import postsRouter from './routes/posts';
 import pool           from './db/pool';
 
 dotenv.config();
@@ -34,6 +36,8 @@ app.use('/api/wiki',     wikiRouter);
 app.use('/api/plans',    plansRouter);
 app.use('/api/communities', communitiesRouter);
 app.use('/api/events', eventsRouter);
+app.use('/api/news', newsRouter);
+app.use('/api/posts', postsRouter);
 
 // ── Health check ──────────────────────────────────────────────────────────────
 app.get('/api/health', async (_req, res) => {
