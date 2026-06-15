@@ -46,6 +46,20 @@ router.get('/me', authenticate, async (req: Request, res: Response): Promise<voi
  * GET /api/users/:id
  * Public profile.
  */
+router.get('/search', authenticate, async (req: Request, res: Response): Promise<void> => {
+  try {
+    const q = req.query.q as string;
+    if (!q || q.trim().length < 2) { res.json([]); return; }
+    const result = await pool.query(
+      'SELECT id, username, level, points FROM users WHERE username ILIKE $1 AND id != $2 LIMIT 10',
+      ['%' + q + '%', req.user!.userId]
+    );
+    res.json(result.rows);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 router.get('/:id', async (req: Request, res: Response): Promise<void> => {
   try {
     const result = await pool.query(
