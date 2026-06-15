@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Plus, Trash2, ChevronDown, ChevronUp, Dumbbell } from 'lucide-react';
 import { Card } from '../ui/card';
 import { Button } from '../ui/button';
-import { api, TrainingPlan } from '../../api';
+import { api, TrainingPlan, WikiExercise } from '../../api';
 
 export function PlansTab() {
   const [plans, setPlans] = useState<TrainingPlan[]>([]);
@@ -17,7 +17,13 @@ export function PlansTab() {
     { name: '', sets: 3, reps: 10, notes: '' }
   ]);
   const [saving, setSaving] = useState(false);
+  const [wikiExercises, setWikiExercises] = useState<WikiExercise[]>([]);
+  const [showExDropdown, setShowExDropdown] = useState<number | null>(null);
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    api.wiki.list().then(setWikiExercises).catch(console.error);
+  }, []);
 
   useEffect(() => {
     api.plans.list()
