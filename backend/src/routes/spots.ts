@@ -84,3 +84,103 @@ router.patch(
 );
 
 export default router;
+
+/**
+ * PUT /api/spots/:id
+ * Update a spot. Only creator or admin can edit.
+ */
+router.put('/:id', authenticate, async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { name, description, address, equipment } = req.body;
+    const spotRes = await pool.query('SELECT created_by FROM spots WHERE id = $1', [req.params.id]);
+    if (!spotRes.rowCount) { res.status(404).json({ error: 'Spot nicht gefunden' }); return; }
+
+    const spot = spotRes.rows[0];
+    if (spot.created_by !== req.user!.userId && !req.user!.isAdmin) {
+      res.status(403).json({ error: 'Keine Berechtigung' }); return;
+    }
+
+    const result = await pool.query(
+      `UPDATE spots SET name = COALESCE($1, name), description = COALESCE($2, description),
+       address = COALESCE($3, address), equipment = COALESCE($4, equipment)
+       WHERE id = $5 RETURNING *`,
+      [name ?? null, description ?? null, address ?? null, equipment ?? null, req.params.id]
+    );
+    res.json(result.rows[0]);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * DELETE /api/spots/:id
+ * Delete a spot. Only creator or admin can delete.
+ */
+router.delete('/:id', authenticate, async (req: Request, res: Response): Promise<void> => {
+  try {
+    const spotRes = await pool.query('SELECT created_by FROM spots WHERE id = $1', [req.params.id]);
+    if (!spotRes.rowCount) { res.status(404).json({ error: 'Spot nicht gefunden' }); return; }
+
+    const spot = spotRes.rows[0];
+    if (spot.created_by !== req.user!.userId && !req.user!.isAdmin) {
+      res.status(403).json({ error: 'Keine Berechtigung' }); return;
+    }
+
+    await pool.query('DELETE FROM spots WHERE id = $1', [req.params.id]);
+    res.json({ message: 'Spot gelöscht' });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * PUT /api/spots/:id
+ * Update a spot. Only creator or admin can edit.
+ */
+router.put('/:id', authenticate, async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { name, description, address, equipment } = req.body;
+    const spotRes = await pool.query('SELECT created_by FROM spots WHERE id = $1', [req.params.id]);
+    if (!spotRes.rowCount) { res.status(404).json({ error: 'Spot nicht gefunden' }); return; }
+
+    const spot = spotRes.rows[0];
+    const isOwner = spot.created_by === req.user!.userId;
+    const isAdmin = req.user!.isAdmin;
+    if (!isOwner && !isAdmin) {
+      res.status(403).json({ error: 'Keine Berechtigung' }); return;
+    }
+
+    const result = await pool.query(
+      `UPDATE spots SET name = COALESCE($1, name), description = COALESCE($2, description),
+       address = COALESCE($3, address), equipment = COALESCE($4, equipment)
+       WHERE id = $5 RETURNING *`,
+      [name ?? null, description ?? null, address ?? null, equipment ?? null, req.params.id]
+    );
+    res.json(result.rows[0]);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * DELETE /api/spots/:id
+ * Delete a spot. Only creator or admin can delete.
+ */
+router.delete('/:id', authenticate, async (req: Request, res: Response): Promise<void> => {
+  try {
+    const spotRes = await pool.query('SELECT created_by FROM spots WHERE id = $1', [req.params.id]);
+    if (!spotRes.rowCount) { res.status(404).json({ error: 'Spot nicht gefunden' }); return; }
+
+    const spot = spotRes.rows[0];
+    const isOwner = spot.created_by === req.user!.userId;
+    const isAdmin = req.user!.isAdmin;
+    if (!isOwner && !isAdmin) {
+      res.status(403).json({ error: 'Keine Berechtigung' }); return;
+    }
+
+    await pool.query('DELETE FROM spots WHERE id = $1', [req.params.id]);
+    res.json({ message: 'Spot gelöscht' });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});

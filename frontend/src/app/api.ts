@@ -62,6 +62,8 @@ export const api = {
     },
     get: (id: string) => request<ApiSpot>('GET', `/spots/${id}`),
     create: (body: CreateSpotBody) => request<ApiSpot>('POST', '/spots', body),
+    update: (id: string, body: { name?: string; description?: string; address?: string; equipment?: string[] }) => request<ApiSpot>('PUT', '/spots/' + id, body),
+    delete: (id: string) => request<{ message: string }>('DELETE', '/spots/' + id),
     moderate: (id: string, action: 'validate' | 'reject') =>
       request<ApiSpot>('PATCH', `/spots/${id}/moderate`, { action }),
   },

@@ -198,7 +198,7 @@ export default function App() {
       {currentView === 'wiki' && (<><WikiTab /><BottomNav activeTab="wiki" onTabChange={handleTabChange} /></>)}
       {currentView === 'plans' && (<><PlansTab /><BottomNav activeTab="plans" onTabChange={handleTabChange} /></>)}
       {currentView === 'spot-detail' && selectedSpot && (
-        <SpotDetailView spot={selectedSpot} onBack={() => setCurrentView('activity')} onRatingSubmit={handleRatingSubmit} onWorkoutSubmit={handleWorkoutSubmit} />
+        <SpotDetailView spot={selectedSpot} onBack={() => setCurrentView('activity')} onRatingSubmit={handleRatingSubmit} onWorkoutSubmit={handleWorkoutSubmit} onDeleteSpot={(id) => setSpots(prev => prev.filter(s => s.id !== id))} currentUserId={authUser.id} isAdmin={isAdmin} />
       )}
       {currentView === 'profile' && (
         <>
