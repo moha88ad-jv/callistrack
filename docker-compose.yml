@@ -1,6 +1,4 @@
 version: '3.9'
-
-# CallisTrack – uses Supabase as DB (no local postgres container needed)
 services:
   backend:
     build:
@@ -8,10 +6,15 @@ services:
       dockerfile: Dockerfile
     container_name: callistrack_api
     restart: unless-stopped
-    env_file: ./backend/.env
+    environment:
+      - PORT=3001
+      - NODE_ENV=production
+      - DATABASE_URL=postgresql://postgres.gwkpryeeilfdhfpqbwgb:BoMrHs2004%40%23!@aws-0-eu-west-1.pooler.supabase.com:5432/postgres
+      - JWT_SECRET=callistrack_jwt_secret_2026_hochschule_mainz
+      - JWT_EXPIRES_IN=7d
+      - CORS_ORIGINS=http://localhost:5173,http://localhost:80
     ports:
       - "3001:3001"
-
   frontend:
     build:
       context: ./frontend
