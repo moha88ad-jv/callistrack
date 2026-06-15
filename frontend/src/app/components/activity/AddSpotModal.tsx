@@ -60,7 +60,7 @@ export function AddSpotModal({ isOpen, onClose, onSubmit }: AddSpotModalProps) {
       setSearching(true);
       try {
         const res = await fetch(
-          `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(addressQuery)}&format=json&limit=5&countrycodes=de`,
+          `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(addressQuery)}&format=json&limit=5&countrycodes=de&addressdetails=1&featuretype=&bounded=0`,
           { headers: { 'Accept-Language': 'de' } }
         );
         const data = await res.json();
