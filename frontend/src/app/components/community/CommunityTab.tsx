@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
-import { Trophy, Users, UserPlus, UserCheck, Award, Plus, X, Search } from 'lucide-react';
+import { Trophy, Users, UserPlus, UserCheck, Award, Plus, X, Search, Heart, ChevronLeft, Send } from 'lucide-react';
 import { Card } from '../ui/card';
 import { Button } from '../ui/button';
 import { Avatar, AvatarFallback } from '../ui/avatar';
-import { api, ApiRankingEntry, Community } from '../../api';
+import { api, ApiRankingEntry, Community, CommunityPost } from '../../api';
 
 export function CommunityTab() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -18,6 +18,12 @@ export function CommunityTab() {
   const [newDesc, setNewDesc] = useState('');
   const [saving, setSaving] = useState(false);
 
+  // Community Posts
+  const [selectedCommunity, setSelectedCommunity] = useState<Community | null>(null);
+  const [posts, setPosts] = useState<CommunityPost[]>([]);
+  const [newPost, setNewPost] = useState('');
+  const [loadingPosts, setLoadingPosts] = useState(false);
+
   useEffect(() => {
     Promise.all([
       api.communities.list(),
@@ -31,11 +37,7 @@ export function CommunityTab() {
 
   const handleSearch = async (q: string) => {
     setSearchQuery(q);
-    if (q.trim().length < 2) {
-      setUserResults([]);
-      setCommunityResults([]);
-      return;
-    }
+    if (q.trim().length < 2) { setUserResults([]); setCommunityResults([]); return; }
     setSearching(true);
     try {
       const [usersData, communitiesData] = await Promise.all([
@@ -51,24 +53,53 @@ export function CommunityTab() {
     }
   };
 
-  const toggleFollow = async (userId: string) => {
+  const openCommunity = async (community: Community) => {
+    setSelectedCommunity(community);
+    setLoadingPosts(true);
     try {
-      if (following.has(userId)) {
-        await fetch(`/api/users/${userId}/follow`, {
-          method: 'DELETE',
-          headers: { Authorization: `Bearer ${localStorage.getItem('ct_token')}` }
-        });
-        setFollowing(prev => { const s = new Set(prev); s.delete(userId); return s; });
-      } else {
-        await fetch(`/api/users/${userId}/follow`, {
-          method: 'POST',
-          headers: { Authorization: `Bearer ${localStorage.getItem('ct_token')}` }
-        });
-        setFollowing(prev => new Set(prev).add(userId));
-      }
+      const postsData = await api.posts.list(community.id);
+      setPosts(postsData);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoadingPosts(false);
+    }
+  };
+
+  const handleCreatePost = async () => {
+    if (!newPost.trim() || !selectedCommunity) return;
+    try {
+      const created = await api.posts.create(selectedCommunity.id, newPost);
+      setPosts(prev => [{ ...created, likes: 0, is_liked: false }, ...prev]);
+      setNewPost('');
+    } catch (err: any) {
+      alert(err.message);
+    }
+  };
+
+  const handleLikePost = async (post: CommunityPost) => {
+    try {
+      await api.posts.like(post.id);
+      setPosts(prev => prev.map(p =>
+        p.id === post.id
+          ? { ...p, is_liked: !p.is_liked, likes: p.is_liked ? p.likes - 1 : p.likes + 1 }
+          : p
+      ));
     } catch (err) {
       console.error(err);
     }
+  };
+
+  const toggleFollow = async (userId: string) => {
+    try {
+      if (following.has(userId)) {
+        await fetch(`/api/users/${userId}/follow`, { method: 'DELETE', headers: { Authorization: `Bearer ${localStorage.getItem('ct_token')}` } });
+        setFollowing(prev => { const s = new Set(prev); s.delete(userId); return s; });
+      } else {
+        await fetch(`/api/users/${userId}/follow`, { method: 'POST', headers: { Authorization: `Bearer ${localStorage.getItem('ct_token')}` } });
+        setFollowing(prev => new Set(prev).add(userId));
+      }
+    } catch (err) { console.error(err); }
   };
 
   const toggleCommunity = async (community: Community) => {
@@ -88,9 +119,7 @@ export function CommunityTab() {
           ? { ...c, is_member: !c.is_member, member_count: c.is_member ? c.member_count - 1 : c.member_count + 1 }
           : c
       ));
-    } catch (err) {
-      console.error(err);
-    }
+    } catch (err) { console.error(err); }
   };
 
   const handleCreateCommunity = async () => {
@@ -99,14 +128,9 @@ export function CommunityTab() {
     try {
       const created = await api.communities.create({ name: newName, description: newDesc || undefined });
       setCommunities(prev => [{ ...created, member_count: 1, is_member: true }, ...prev]);
-      setNewName('');
-      setNewDesc('');
-      setShowCreateForm(false);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setSaving(false);
-    }
+      setNewName(''); setNewDesc(''); setShowCreateForm(false);
+    } catch (err) { console.error(err); }
+    finally { setSaving(false); }
   };
 
   const challenges = [
@@ -117,6 +141,83 @@ export function CommunityTab() {
   const suggestedCommunities = communities.filter(c => !c.is_member).slice(0, 3);
   const joinedCommunities = communities.filter(c => c.is_member);
   const isSearching = searchQuery.trim().length >= 2;
+
+  // Community Detail View
+  if (selectedCommunity) {
+    return (
+      <div className="size-full overflow-y-auto bg-gray-50">
+        <div className="sticky top-0 bg-white border-b px-4 py-3 flex items-center gap-3 z-10">
+          <button onClick={() => setSelectedCommunity(null)} className="p-2 hover:bg-gray-100 rounded-full">
+            <ChevronLeft className="size-5" />
+          </button>
+          <div className="flex-1">
+            <h1 className="font-bold">{selectedCommunity.name}</h1>
+            <p className="text-xs text-gray-500">{selectedCommunity.member_count} Mitglieder</p>
+          </div>
+          <Button size="sm" variant={selectedCommunity.is_member ? 'outline' : 'default'} onClick={() => toggleCommunity(selectedCommunity)}>
+            {selectedCommunity.is_member ? 'Verlassen' : 'Beitreten'}
+          </Button>
+        </div>
+
+        <div className="p-4 space-y-4">
+          {/* Post erstellen - nur für Mitglieder */}
+          {selectedCommunity.is_member && (
+            <Card className="p-4">
+              <div className="flex gap-3">
+                <div className="flex-1">
+                  <textarea
+                    value={newPost}
+                    onChange={e => setNewPost(e.target.value)}
+                    placeholder="Was möchtest du teilen?"
+                    rows={3}
+                    className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 resize-none"
+                  />
+                  <Button size="sm" className="mt-2 w-full" onClick={handleCreatePost} disabled={!newPost.trim()}>
+                    <Send className="size-4 mr-1" />
+                    Posten
+                  </Button>
+                </div>
+              </div>
+            </Card>
+          )}
+
+          {/* Posts */}
+          {loadingPosts ? (
+            <p className="text-center text-gray-500 py-4">Lädt...</p>
+          ) : posts.length === 0 ? (
+            <Card className="p-6 text-center text-gray-500">
+              <p>Noch keine Posts.</p>
+              {selectedCommunity.is_member && <p className="text-sm mt-1">Sei der Erste und teile etwas!</p>}
+            </Card>
+          ) : (
+            posts.map(post => (
+              <Card key={post.id} className="p-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <Avatar className="size-8">
+                    <AvatarFallback className="bg-emerald-600 text-white text-xs">
+                      {post.username.substring(0, 2).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <div className="font-semibold text-sm">{post.username}</div>
+                    <div className="text-xs text-gray-500">{new Date(post.created_at).toLocaleDateString('de-DE')}</div>
+                  </div>
+                </div>
+                <p className="text-sm text-gray-700 mb-3">{post.content}</p>
+                <button
+                  onClick={() => handleLikePost(post)}
+                  className={`flex items-center gap-1 text-sm ${post.is_liked ? 'text-red-500' : 'text-gray-400'}`}
+                >
+                  <Heart className={`size-4 ${post.is_liked ? 'fill-red-500' : ''}`} />
+                  <span>{post.likes}</span>
+                </button>
+              </Card>
+            ))
+          )}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="size-full overflow-y-auto bg-gray-50">
@@ -167,10 +268,7 @@ export function CommunityTab() {
                               <div className="text-xs text-gray-500">Level {user.level} • {user.points} Punkte</div>
                             </div>
                             <Button size="sm" variant={following.has(user.id) ? 'default' : 'outline'} onClick={() => toggleFollow(user.id)}>
-                              {following.has(user.id)
-                                ? <><UserCheck className="size-4 mr-1" />Gefolgt</>
-                                : <><UserPlus className="size-4 mr-1" />Folgen</>
-                              }
+                              {following.has(user.id) ? <><UserCheck className="size-4 mr-1" />Gefolgt</> : <><UserPlus className="size-4 mr-1" />Folgen</>}
                             </Button>
                           </div>
                         </Card>
@@ -178,7 +276,6 @@ export function CommunityTab() {
                     </div>
                   </div>
                 )}
-
                 {communityResults.length > 0 && (
                   <div>
                     <h3 className="font-semibold text-gray-600 mb-2">COMMUNITIES</h3>
@@ -251,7 +348,7 @@ export function CommunityTab() {
             <h2 className="text-lg font-bold mb-4">MEINE COMMUNITIES</h2>
             <div className="space-y-3">
               {joinedCommunities.map(community => (
-                <Card key={community.id} className="p-4">
+                <Card key={community.id} className="p-4 cursor-pointer hover:shadow-md transition-shadow" onClick={() => openCommunity(community)}>
                   <div className="flex items-center gap-3">
                     <div className="size-12 rounded-full bg-emerald-600 flex items-center justify-center flex-shrink-0">
                       <Users className="size-6 text-white" />
@@ -261,9 +358,7 @@ export function CommunityTab() {
                       {community.description && <p className="text-xs text-gray-500">{community.description}</p>}
                       <div className="text-xs text-gray-500">{community.member_count} Mitglieder</div>
                     </div>
-                    <Button size="sm" variant="outline" onClick={() => toggleCommunity(community)}>
-                      Verlassen
-                    </Button>
+                    <span className="text-xs text-emerald-600 font-medium">Öffnen →</span>
                   </div>
                 </Card>
               ))}
@@ -289,20 +384,8 @@ export function CommunityTab() {
                   <button onClick={() => setShowCreateForm(false)}><X className="size-4 text-gray-400" /></button>
                 </div>
                 <div className="space-y-2 mb-3">
-                  <input
-                    type="text"
-                    value={newName}
-                    onChange={e => setNewName(e.target.value)}
-                    placeholder="Name *"
-                    className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                  />
-                  <input
-                    type="text"
-                    value={newDesc}
-                    onChange={e => setNewDesc(e.target.value)}
-                    placeholder="Beschreibung (optional)"
-                    className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                  />
+                  <input type="text" value={newName} onChange={e => setNewName(e.target.value)} placeholder="Name *" className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+                  <input type="text" value={newDesc} onChange={e => setNewDesc(e.target.value)} placeholder="Beschreibung (optional)" className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500" />
                 </div>
                 <Button className="w-full" onClick={handleCreateCommunity} disabled={saving || !newName.trim()}>
                   {saving ? 'Erstellen...' : 'Community erstellen'}
@@ -331,6 +414,20 @@ export function CommunityTab() {
                     </div>
                   </Card>
                 ))}
+              </div>
+            )}
+          </section>
+        )}
+
+        {/* Nutzer */}
+        {!isSearching && (
+          <section>
+            <h2 className="text-lg font-bold mb-4">NUTZER</h2>
+            {loading ? (
+              <p className="text-center text-gray-500 py-4">Lädt...</p>
+            ) : (
+              <div className="grid grid-cols-2 gap-3">
+                {communities.slice(0, 4).map((_, i) => null)}
               </div>
             )}
           </section>
