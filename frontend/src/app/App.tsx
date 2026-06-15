@@ -176,7 +176,7 @@ export default function App() {
     if (user) setUser({ ...user, isPublic });
   };
 
-  const handleTabChange = (tab: 'feed' | 'community' | 'activity' | 'progress' | 'profile') => setCurrentView(tab);
+  const handleTabChange = (tab: 'feed' | 'community' | 'activity' | 'progress' | 'profile' | 'wiki' | 'plans') => setCurrentView(tab);
   const handleRemoveFilter = (f: string) => setFilters((prev) => ({ ...prev, equipment: prev.equipment.filter((eq) => eq !== f) }));
 
   const displayUser: User = user ?? { id: authUser.id, username: authUser.username, level: authUser.level, points: authUser.points, isPublic: authUser.isPublic, stats: { workoutsCompleted: 0, spotsRated: 0, spotsCreated: 0 }, activities: [] };
