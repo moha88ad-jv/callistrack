@@ -111,7 +111,6 @@ export function SpotDetailView({ spot, onBack, onRatingSubmit, onWorkoutSubmit }
           </div>
         </Card>
 
-        {/* Workout loggen */}
         <Card className="p-4">
           <h2 className="font-semibold mb-3">Workout hier loggen</h2>
           <div className="space-y-3">
@@ -138,7 +137,6 @@ export function SpotDetailView({ spot, onBack, onRatingSubmit, onWorkoutSubmit }
                 </button>
               </div>
 
-              {/* Dropdown */}
               {showDropdown && (
                 <div className="absolute left-0 right-0 mt-1 bg-white border rounded-lg shadow-lg max-h-48 overflow-y-auto z-50">
                   {filteredExercises.length === 0 ? (
@@ -181,7 +179,6 @@ export function SpotDetailView({ spot, onBack, onRatingSubmit, onWorkoutSubmit }
           </div>
         </Card>
 
-        {/* Bewertung */}
         <Card className="p-4">
           <h2 className="font-semibold mb-3">Bewertung abgeben</h2>
           <div className="space-y-3">
@@ -205,7 +202,6 @@ export function SpotDetailView({ spot, onBack, onRatingSubmit, onWorkoutSubmit }
           </div>
         </Card>
 
-        {/* Vergangene Bewertungen */}
         {spot.ratings.length > 0 && (
           <Card className="p-4">
             <h2 className="font-semibold mb-3">Bewertungen</h2>
