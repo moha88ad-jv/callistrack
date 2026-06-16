@@ -27,11 +27,11 @@ export function CommunityTab() {
     Promise.all([
       api.communities.list(),
       api.users.followingList(),
-      api.ranking.list(),
+      api.ranking.list().catch(() => []),
     ]).then(([communitiesData, followingIds, usersData]) => {
       setCommunities(communitiesData);
       setFollowing(new Set(followingIds));
-      setTopUsers(usersData.slice(0, 6));
+      setTopUsers((usersData as any[]).slice(0, 6));
     }).catch(console.error)
       .finally(() => setLoading(false));
   }, []);
